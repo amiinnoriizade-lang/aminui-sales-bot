@@ -1,5 +1,17 @@
 # aminui-sales-bot
+---
 
+## ❤️ حمایت مالی از توسعه پروژه (Donate)
+
+اگر این پروژه برای شما مفید بوده، می‌توانید با کمک مالی از ادامه توسعه آن حمایت کنید.
+
+**آدرس کیف پول TRON (شبکه TRC20): TUqbpFe8XmL2qcEdQ77SybMU8YW5vf2qGn
+BTC : 17F1gSMENRr5tAmTnPEoduvtSGGY3KMVzB
+polygan : 0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28
+usdt(trc20) : TFUvPCaon7eBk1Xaoce3geZPjnks3kEaqW
+BNB : 0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28
+ETH : 0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28
+از حمایت شما سپاسگزاریم ❤️
 ربات فروش VPN برای تلگرام؛ رایگان و متن‌باز، بدون نسخه Pro، لایسنس پولی یا قفل قابلیت‌ها. این پروژه برای نصب مستقل روی سرورهای دیگر آماده شده و به IP، مسیر یا دیتابیس محیط توسعه وابسته نیست.
 
 ## قابلیت‌ها
