@@ -57,8 +57,8 @@ ask_secret() {
 
 echo
 echo "=== راه‌اندازی ربات فروش VPN ==="
-echo "رمزها هنگام تایپ نمایش داده نمی‌شوند."
-BOT_TOKEN="$(ask_secret 'توکن ربات تلگرام (BotFather)' "$(old_value BOT_TOKEN)")"
+echo "توکن تلگرام هنگام تایپ نمایش داده می‌شود؛ رمز عبور پنل مخفی می‌ماند."
+BOT_TOKEN="$(ask 'توکن ربات تلگرام (BotFather)' "$(old_value BOT_TOKEN)" yes)"
 ADMIN_IDS="$(ask 'شناسه عددی مدیر تلگرام (چند مدیر با کاما)' "$(old_value ADMIN_IDS)" yes)"
 VPNUI_BASE_URL="$(ask 'آدرس کامل پنل VPN-UI همراه پورت (مثال https://panel.example.com:2053)' "$(old_value VPNUI_BASE_URL)" yes)"
 VPNUI_USERNAME="$(ask 'نام کاربری پنل VPN-UI' "$(old_value VPNUI_USERNAME)" yes)"
