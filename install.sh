@@ -29,7 +29,9 @@ if [[ "$SOURCE_DIR" != "$APP_DIR" ]]; then
     --exclude='*.sqlite*' --exclude='*.tar.gz' \
     -cf - . | tar -C "$APP_DIR" -xf -
 fi
-cp "$SOURCE_DIR/.env.example" "$APP_DIR/.env.example"
+if [[ "$SOURCE_DIR/.env.example" != "$APP_DIR/.env.example" ]]; then
+  cp "$SOURCE_DIR/.env.example" "$APP_DIR/.env.example"
+fi
 mkdir -p "$APP_DIR/data"
 cd "$APP_DIR"
 
