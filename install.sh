@@ -90,7 +90,7 @@ ask_secret() {
 }
 
 echo "=== راه‌اندازی ربات فروش VPN ==="
-BOT_TOKEN="$(ask_secret 'توکن ربات تلگرام' "$(old_value BOT_TOKEN)")"
+BOT_TOKEN="$(ask_value 'توکن ربات تلگرام (در زمان ورود نمایش داده می‌شود)' "$(old_value BOT_TOKEN)" yes)"
 ADMIN_IDS="$(ask_value 'شناسه عددی مدیر (چند مدیر با کاما)' "$(old_value ADMIN_IDS)" yes)"
 VPNUI_BASE_URL="$(ask_value 'آدرس پنل VPN-UI همراه پورت و Base Path' "$(old_value VPNUI_BASE_URL)" yes)"
 VPNUI_USERNAME="$(ask_value 'نام کاربری پنل VPN-UI' "$(old_value VPNUI_USERNAME)" yes)"
