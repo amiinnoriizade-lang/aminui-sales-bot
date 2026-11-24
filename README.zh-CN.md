@@ -34,7 +34,7 @@ sudo bash install.sh
 
 安装程序会询问 Telegram Token、管理员 ID 和 VPN-UI 面板连接信息。输入密钥时不会回显，并会以受限权限保存到 `.env` 文件。加密密钥只生成一次；请安全备份，保存账号凭据后不要更换该密钥。
 
-默认安装目录为 `/opt/aminui-sales-bot`，systemd 服务名称为 `aminui-sales-bot.service`。可通过 `APP_DIR` 修改应用目录。
+默认安装目录为 `/opt/aminui-sales-bot`，安装程序会创建 `aminui-sales-bot.service` 并自动启动服务。如果启动失败，安装将停止并显示服务日志。可通过 `APP_DIR` 修改应用目录。
 
 启动并查看服务：
 
