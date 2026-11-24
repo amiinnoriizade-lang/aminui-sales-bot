@@ -26,37 +26,37 @@ The bot manages one connected VPN-UI panel. It is not a multi-panel orchestrator
 
 ## Install
 
-\`\`\`bash
+~~~bash
 git clone https://github.com/amiinnoriizade-lang/aminui-sales-bot.git
 cd aminui-sales-bot
 sudo bash install.sh
-\`\`\`
+~~~
 
-The installer asks for the Telegram token, admin IDs, VPN-UI URL and credentials, and the public VPN host. Secrets are not echoed. It stores settings in \`/opt/vpnui-sales-bot/.env\` with mode \`600\` and creates the Fernet key once.
+The installer asks for the Telegram token, admin IDs, VPN-UI URL and credentials, and the public VPN host. Secrets are not echoed. It stores settings in /opt/vpnui-sales-bot/.env with mode 600 and creates the Fernet key once.
 
 Canonical paths:
 
-- Application: \`/opt/vpnui-sales-bot\`
-- systemd unit: \`vpnui-sales-bot.service\`
-- Database: \`/opt/vpnui-sales-bot/data/bot.sqlite3\` by default
+- Application: /opt/vpnui-sales-bot
+- systemd unit: vpnui-sales-bot.service
+- Database: /opt/vpnui-sales-bot/data/bot.sqlite3 by default
 
 Start and inspect:
 
-\`\`\`bash
+~~~bash
 sudo systemctl start vpnui-sales-bot
 sudo systemctl status vpnui-sales-bot --no-pager
 sudo journalctl -u vpnui-sales-bot -f
-\`\`\`
+~~~
 
 ## First setup in Telegram
 
-1. Send \`/start\` from an administrator Telegram account.
+1. Send /start from an administrator Telegram account.
 2. Open **مدیریت ربات**.
 3. Open **مشاهده Inboundهای پنل** and confirm panel connectivity.
 4. Select an active VLESS inbound for the free test account.
 5. Create fixed plans or volume-priced services and select the intended inbound.
 6. Configure card number, cardholder name, and payment instructions in **تنظیمات پرداخت**.
-7. Run \`/paneltest\` to re-check panel API read access.
+7. Run /paneltest to re-check panel API read access.
 
 Provisioning writes real clients to the panel. Validate the exact VPN-UI build and selected inbound with a controlled test account before accepting customer payments. An ambiguous panel write is locked for manual reconciliation to prevent duplicate accounts.
 
@@ -64,27 +64,27 @@ Provisioning writes real clients to the panel. Validate the exact VPN-UI build a
 
 Run as root:
 
-\`\`\`bash
+~~~bash
 cd /opt/vpnui-sales-bot
 sudo bash update.sh
-\`\`\`
+~~~
 
-The updater downloads the latest \`main\` source, preserves \`.env\` and the configured SQLite database, backs up the old source, compiles the application, and runs the unit tests before restarting an already-running service. If an update or test fails, it restores the previous source. A service that was stopped remains stopped.
+The updater downloads the latest main source, preserves .env and the configured SQLite database, backs up the old source, compiles the application, and runs the unit tests before restarting an already-running service. If an update or test fails, it restores the previous source. A service that was stopped remains stopped.
 
 ## Tests
 
-\`\`\`bash
+~~~bash
 .venv/bin/python -m compileall -q app run.py
 .venv/bin/python -m unittest discover -s tests -v
-\`\`\`
+~~~
 
 GitHub Actions runs the same checks on pushes and pull requests.
 
 ## Security and backups
 
-- Never commit \`.env\`, \`.env.*\` backups, SQLite files, or panel credentials.
-- Back up \`.env\` and the SQLite database together, securely and separately from GitHub.
-- Keep \`APP_ENCRYPTION_KEY\`; without it, encrypted credentials in the database cannot be decrypted.
+- Never commit .env, .env.* backups, SQLite files, or panel credentials.
+- Back up .env and the SQLite database together, securely and separately from GitHub.
+- Keep APP_ENCRYPTION_KEY; without it, encrypted credentials in the database cannot be decrypted.
 - TLS certificate verification is mandatory.
 - Run only one polling instance for a given Telegram bot token. A second instance causes Telegram polling conflicts.
 
