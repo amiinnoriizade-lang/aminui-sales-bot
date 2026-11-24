@@ -1,44 +1,74 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-APP_DIR="${APP_DIR:-/opt/aminui-sales-bot}"
-SERVICE="aminui-sales-bot"
-
-if [[ "${EUID}" -ne 0 ]]; then
-  echo "با root اجرا کنید: sudo bash update.sh" >&2
-  exit 1
-fi
+APP_DIR="${APP_DIR:-/opt/vpnui-sales-bot}"
+SERVICE="vpnui-sales-bot"
+REPO="https://github.com/amiinnoriizade-lang/aminui-sales-bot.git"
+if [[ "${EUID}" -ne 0 ]]; then echo "با root اجرا کنید: sudo bash update.sh" >&2; exit 1; fi
 cd "$APP_DIR"
 if systemctl is-active --quiet "$SERVICE"; then WAS_ACTIVE=1; else WAS_ACTIVE=0; fi
+if [[ -d .git && -n "$(git status --porcelain)" ]]; then
+  echo "تغییر محلی در مخزن وجود دارد؛ ابتدا آن را جداگانه ذخیره کنید." >&2
+  exit 1
+fi
 STAMP="$(date +%Y%m%d-%H%M%S)"
+SOURCE_BACKUP="/root/vpnui-sales-bot-source-$STAMP.tar.gz"
+HAD_GIT=0
+OLD_HEAD=''
+if [[ -d .git ]]; then HAD_GIT=1; OLD_HEAD="$(git rev-parse HEAD)"; fi
+tar -C "$APP_DIR" --exclude='./.git' --exclude='./.venv' --exclude='./data' --exclude='./.env' --exclude='./.env.backup*' -czf "$SOURCE_BACKUP" .
 [[ ! -f .env ]] || cp -a .env ".env.backup.$STAMP"
-[[ ! -f data/bot.sqlite3 ]] || cp -a data/bot.sqlite3 "data/bot.sqlite3.backup.$STAMP"
+DB_PATH="$(.venv/bin/python -c 'from dotenv import dotenv_values; print(dotenv_values(".env").get("DATABASE_PATH") or "./data/bot.sqlite3")' 2>/dev/null || echo './data/bot.sqlite3')"
+if [[ "$DB_PATH" != /* ]]; then DB_PATH="$APP_DIR/$DB_PATH"; fi
+if [[ -f "$DB_PATH" ]]; then cp -a "$DB_PATH" "$DB_PATH.backup.$STAMP"; fi
+
+rollback() {
+  echo "به‌روزرسانی ناموفق بود؛ سورس قبلی برگردانده می‌شود." >&2
+  tar -C "$APP_DIR" -xzf "$SOURCE_BACKUP"
+  if [[ "$HAD_GIT" -eq 1 ]]; then git reset --hard "$OLD_HEAD" >/dev/null 2>&1 || true; else rm -rf .git; fi
+}
+trap rollback ERR
 
 if [[ ! -d .git ]]; then
-  echo "این نصب Git clone نیست؛ در حال تبدیل امن به نصب قابل به‌روزرسانی..."
   apt-get update
   apt-get install -y git
   TMP_DIR="$(mktemp -d)"
   trap 'rm -rf "$TMP_DIR"' EXIT
-  git clone --depth 1 https://github.com/amiinnoriizade-lang/aminui-sales-bot.git "$TMP_DIR/repo"
-  tar -C "$TMP_DIR/repo" --exclude='./.git' -cf - . | tar -C "$APP_DIR" -xf -
+  git clone --depth 1 "$REPO" "$TMP_DIR/repo"
+  tar -C "$TMP_DIR/repo" --exclude='./.git' --exclude='./.env' --exclude='./.env.*' --exclude='./.venv' --exclude='./data' -cf - . | tar -C "$APP_DIR" -xf -
   cp -a "$TMP_DIR/repo/.git" "$APP_DIR/.git"
-  echo "سورس دریافت شد و مسیر به Git متصل شد."
 else
-  git pull --ff-only
+  ORIGIN="$(git remote get-url origin)"
+  [[ "$ORIGIN" == "$REPO" || "$ORIGIN" == "${REPO%.git}" ]] || { echo "مخزن origin با پروژه مورد انتظار یکی نیست: $ORIGIN" >&2; exit 1; }
+  git pull --ff-only origin main
 fi
-.venv/bin/python -m pip install -r requirements.txt
-mkdir -p "/etc/systemd/system/${SERVICE}.service.d"
-cat > "/etc/systemd/system/${SERVICE}.service.d/restart-policy.conf" <<'EOF'
-[Unit]
-StartLimitIntervalSec=300
-StartLimitBurst=5
 
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m compileall -q app run.py
+.venv/bin/python -m unittest discover -s tests -v
+
+cat > "/etc/systemd/system/${SERVICE}.service" <<UNIT
+[Unit]
+Description=VPN-UI Telegram Sales Bot
+After=network-online.target
+Wants=network-online.target
 [Service]
+Type=simple
+WorkingDirectory=$APP_DIR
+EnvironmentFile=$APP_DIR/.env
+ExecStart=$APP_DIR/.venv/bin/python $APP_DIR/run.py
 Restart=on-failure
 RestartSec=30
-EOF
+User=root
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=$APP_DIR
+[Install]
+WantedBy=multi-user.target
+UNIT
 systemctl daemon-reload
-if [[ "$WAS_ACTIVE" -eq 1 ]]; then
-  systemctl restart "$SERVICE"
-fi
+trap - ERR
+if [[ "$WAS_ACTIVE" -eq 1 ]]; then systemctl restart "$SERVICE"; fi
 systemctl --no-pager --full status "$SERVICE" || true
+echo "سورس پشتیبان: $SOURCE_BACKUP"
