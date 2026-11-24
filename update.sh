@@ -25,6 +25,7 @@ rollback() {
   echo "به‌روزرسانی ناموفق بود؛ سورس قبلی برگردانده می‌شود." >&2
   tar -C "$APP_DIR" -xzf "$SOURCE_BACKUP"
   if [[ "$HAD_GIT" -eq 1 ]]; then git reset --hard "$OLD_HEAD" >/dev/null 2>&1 || true; else rm -rf .git; fi
+  if [[ "$WAS_ACTIVE" -eq 1 ]]; then systemctl restart "$SERVICE" || true; fi
 }
 trap rollback ERR
 
