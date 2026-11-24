@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# updater-revision: legacy-install-path-compat-2026-11-24
 set -Eeuo pipefail
 APP_DIR="${APP_DIR:-/opt/vpnui-sales-bot}"
 if [[ ! -d "$APP_DIR" && -d /opt/aminui-sales-bot ]]; then APP_DIR="/opt/aminui-sales-bot"; fi
