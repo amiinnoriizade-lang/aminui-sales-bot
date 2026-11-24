@@ -1,187 +1,118 @@
-❤️ حمایت مالی از پروژه (Donate)
+# ربات فروش VPN متصل به VPN-UI
 
-اگر این پروژه برای شما مفید بوده، می‌توانید با کمک مالی از ادامه توسعه آن حمایت کنید.
+ربات تلگرامی فروش و مدیریت سرویس با منوی گرافیکی مشتری و مدیر، پلن‌های فروش، پرداخت کارت‌به‌کارت با تأیید دستی، SQLite و اتصال به پنل VPN-UI.
 
-کیف پول TRON (TRX)
+## امکانات موجود در کد
+- منوی مشتری و پنل مدیریت تلگرام
+- تعریف پلن و سرویس حجمی، قیمت‌گذاری و مدت اعتبار
+- نام کاربری دلخواه و جلوگیری از تکرار
+- دریافت رسید و تأیید/رد سفارش توسط مدیر
+- ساخت و تمدید حساب از طریق API پنل
+- پشتیبانی پیاده‌سازی‌شده در کد برای VLESS، L2TP و OpenVPN (فایل پروفایل OpenVPN از inbound انتخاب‌شده دریافت می‌شود)
+- ذخیره اطلاعات در SQLite و رمزنگاری اطلاعات محرمانه حساب‌ها
 
-TUqbpFe8XmL2qcEdQ77SybMU8YW5vf2qGn
+> نکته: برای ساخت واقعی حساب باید API پنل و inboundهای انتخابی با نسخه نصب‌شده VPN-UI سازگار باشند. ابتدا در حالت DRY_RUN آزمایش کنید.
 
-کیف پول بیت‌کوین (BTC)
+## پیش‌نیاز
+- Ubuntu 22.04 یا 24.04
+- دسترسی root یا sudo
+- توکن ربات تلگرام
+- شناسه عددی تلگرام مدیر
+- آدرس، نام کاربری و رمز پنل VPN-UI و دسترسی شبکه سرور ربات به پنل
 
-17F1gSMENRr5tAmTnPEoduvtSGGY3KMVz
+## نصب سریع از GitHub
 
-کیف پول Polygon
+هر خط را جداگانه اجرا کنید:
 
-0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28
-
-کیف پول تتر (USDT - TRC20)
-
-TFUvPCaon7eBk1Xaoce3geZPjnks3kEaqW
-
-کیف پول BNB
-
-0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28
-
-کیف پول اتریوم (ETH)
-
-0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28
-
-از حمایت و همراهی شما سپاسگزاریم ❤️
-
----
- ربات فروش و مدیریت سرویس VPN پنل VPN-UI*
-
-ربات تلگرامی فروش VPN با قابلیت مدیریت کاربران، پلن‌های فروش، پرداخت کارت‌به‌کارت و اتصال به پنل مدیریت سرویس‌های VPN.
-
-امکانات
-
-منوی گرافیکی مشتری در تلگرام
-
-پنل مدیریت گرافیکی برای مدیر
-
-تعریف و ویرایش پلن‌های فروش
-
-تنظیم مدت اعتبار و حجم سرویس
-
-پشتیبانی از حجم نامحدود
-
-انتخاب نام کاربری دلخواه توسط مشتری
-
-جلوگیری از نام کاربری تکراری
-
-پرداخت کارت‌به‌کارت با تأیید دستی مدیر
-
-مدیریت حساب‌های VPN
-
-اتصال به پنل VPN-UI
-
-مدیریت تنظیمات از طریق متغیرهای محیطی
-
-ذخیره اطلاعات در پایگاه داده SQLite
-
-پیش‌نیازها
-
-Ubuntu 22.04 یا 24.04
-
-Python 3.10 یا بالاتر
-
-دسترسی SSH
-
-توکن ربات تلگرام
-
-شناسه عددی مدیر تلگرام
-ابتدا محزن git را نصب کنید
-
+```bash
 apt update && apt install -y git
+git clone https://github.com/amiinnoriizade-lang/aminui-sales-bot.git
+cd aminui-sales-bot
+chmod +x install.sh
+sudo bash install.sh
+```
 
+نصب‌کننده Python و وابستگی‌ها را نصب می‌کند، فایل تنظیمات را در مسیر `/opt/aminui-sales-bot/.env` می‌سازد، کلید رمزنگاری را تولید می‌کند و سرویس systemd را ثبت می‌کند. نصب‌کننده ربات را خودکار اجرا نمی‌کند تا ابتدا اطلاعات محرمانه را تنظیم کنید.
 
-نصب سریع
+## تنظیمات اولیه
 
-ابتدا مخزن را دریافت کنید:
+فایل زیر را باز کنید:
 
-git clone https://github.com/amiinnoriizade-lang/aminui-sales-bot.git cd aminui-sales-bot
+```bash
+nano /opt/aminui-sales-bot/.env
+```
 
-سپس نصب را اجرا کنید:
+حداقل این موارد را با اطلاعات واقعی خودتان پر کنید:
 
-chmod +x install.sh sudo ./install.sh
+- `BOT_TOKEN`: توکن دریافتی از BotFather
+- `ADMIN_IDS`: شناسه عددی مدیر؛ در صورت تعدد با کاما جدا کنید
+- `VPNUI_BASE_URL`: آدرس پنل، همراه پورت و بدون اسلش انتهایی
+- `VPNUI_USERNAME` و `VPNUI_PASSWORD`: اطلاعات ورود پنل
+- `VPNUI_VERIFY_TLS=true`: اعتبارسنجی گواهی TLS؛ فقط در صورت استفاده از گواهی نامعتبر و با آگاهی از ریسک، تغییر دهید.
 
-تنظیمات
+`APP_ENCRYPTION_KEY` در نصب اولیه خودکار ساخته می‌شود. آن را حذف یا عوض نکنید؛ تغییر آن باعث می‌شود رمزهای ذخیره‌شده قبلی قابل رمزگشایی نباشند. از فایل .env و دیتابیس پشتیبان امن بگیرید و هیچ‌کدام را در GitHub قرار ندهید.
 
-فایل نمونه تنظیمات را کپی کنید:
+اطلاعات کارت و متن پرداخت اختیاری‌اند و از منوی مدیریت ربات نیز قابل تنظیم هستند. برای شروع می‌توانید `DEFAULT_PLANS_JSON=[]` نگه دارید و پلن‌ها را از منوی مدیریت بسازید.
 
-cp .env.example .env
+## اجرای ربات
 
-مقادیر موردنیاز را در فایل ".env" تنظیم کنید.
+پس از تکمیل فایل .env:
 
-نکته امنیتی: فایل ".env" حاوی اطلاعات محرمانه است و نباید در GitHub منتشر شود.
+```bash
+systemctl start aminui-sales-bot
+systemctl status aminui-sales-bot --no-pager
+journalctl -u aminui-sales-bot -f
+```
 
-اجرا
+برای توقف و راه‌اندازی مجدد:
 
-python3 run.py
+```bash
+systemctl stop aminui-sales-bot
+systemctl restart aminui-sales-bot
+```
 
-اجرای سرویس در Ubuntu
+## حالت آزمایشی و ساخت واقعی
 
-در صورت نصب سرویس systemd:
+به‌صورت پیش‌فرض `DRY_RUN=true` است و ساخت واقعی حساب مسدود می‌ماند. ابتدا اتصال پنل و inboundها را با دستور مدیریتی `/paneltest` بررسی کنید و پلن آزمایشی بسازید. فقط پس از تأیید API و تست روی inbound آزمایشی، `DRY_RUN=false` کنید و سرویس را restart کنید. خاموش کردن DRY_RUN بدون تست صحیح می‌تواند باعث سفارش ناموفق یا ساخت ناخواسته حساب شود.
 
-sudo systemctl enable vpnui-sales-bot sudo systemctl start vpnui-sales-bot
+## به‌روزرسانی
 
-مشاهده وضعیت:
+```bash
+cd /opt/aminui-sales-bot
+sudo bash update.sh
+```
 
-sudo systemctl status vpnui-sales-bot
+اسکریپت قبل از به‌روزرسانی از .env و دیتابیس نسخه پشتیبان می‌گیرد و فقط در صورتی که سرویس قبلاً فعال بوده باشد آن را دوباره راه‌اندازی می‌کند.
 
-مشاهده گزارش:
+## تست‌ها
 
-sudo journalctl -u vpnui-sales-bot -f
+```bash
+cd /opt/aminui-sales-bot
+.venv/bin/python -m unittest discover -s tests -v
+```
 
-به‌روزرسانی
+## ساختار اصلی
 
-chmod +x update.sh sudo ./update.sh
+- `app/`: کد برنامه
+- `tests/`: تست‌ها
+- `data/`: پایگاه داده محلی
+- `.env.example`: نمونه تنظیمات غیرمحرمانه
+- `install.sh`: نصب وابستگی‌ها و سرویس
+- `update.sh`: پشتیبان‌گیری و به‌روزرسانی
 
-قبل از به‌روزرسانی، از پایگاه داده نسخه پشتیبان تهیه کنید.
+## حمایت مالی
 
-اجرای تست‌ها
+اگر پروژه برای شما مفید است، می‌توانید از توسعه آن حمایت کنید:
 
-python3 -m pytest -v
+| شبکه | آدرس |
+|---|---|
+| TRON (TRX) | `TUqbpFe8XmL2qcEdQ77SybMU8YW5vf2qGn` |
+| Bitcoin (BTC) | `17F1gSMENRr5tAmTnPEoduvtSGGY3KMVz` |
+| Polygon | `0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28` |
+| USDT (TRC20) | `TFUvPCaon7eBk1Xaoce3geZPjnks3kEaqW` |
+| BNB | `0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28` |
+| ETH | `0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28` |
 
-ساختار پروژه
+## پنل VPN-UI
 
-"app/": کدهای اصلی برنامه
-
-"tests/": تست‌های نرم‌افزار
-
-"data/": اطلاعات پایگاه داده
-
-"requirements.txt": وابستگی‌های Python
-
-".env.example": نمونه تنظیمات
-
-"install.sh": اسکریپت نصب
-
-"update.sh": اسکریپت به‌روزرسانی
-
-امنیت
-
-اطلاعات محرمانه را در مخزن عمومی قرار ندهید.
-
-فایل ".env" را منتشر نکنید.
-
-از پایگاه داده به‌صورت منظم پشتیبان بگیرید.
-
-قبل از انتشار نسخه جدید، تست‌ها را اجرا کنید.
-
-*پنل VPN-UI
-ویژگی و امکانات پنل VPN-UI
-PPTP
-
-L2TP (RAW)
-
-L2TP/IPsec
-
-OpenVPN
-
-OpenConnect (cisco)
-
-SSTP
-
-IKEv2
-
-WireGuard (C)
-
-AmneziaWG (نسخه‌ی مبهم‌سازی‌شده‌ی WireGuard)
-
-GRE (تونل‌های site-to-site بین روترها، در صورت نیاز روی IPsec)
-
-MTProto Proxy (Telegram)
-
-SSH
-پنل نماینده 
-پنل مدیریت با دسترسی های مختلف
-
-نصب‌پنل با آدرس مستقیم :
-
-curl -Ls https://raw.githubusercontent.com/Sir-MmD/vpn-ui/refs/heads/main/deploy.sh | sudo bash
-
-ادرس پروژه : 
-
-
-https://github.com/Sir-MmD/vpn-ui/blob/main/README_FA.md
+پروژه پنل موردنیاز: https://github.com/Sir-MmD/vpn-ui
