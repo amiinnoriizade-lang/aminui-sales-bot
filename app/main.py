@@ -828,11 +828,17 @@ async def main():
   while True:
    try:
     # start_polling performs the required bot identity lookup itself.
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, polling_timeout=50)
     break
    except TelegramRetryAfter as e:
     wait_seconds = max(1, int(e.retry_after)) + 2
-    logging.warning('Telegram rate limit during bot startup/polling; retrying in %s seconds.', wait_seconds)
+    method = getattr(e, 'method', None)
+    method_name = type(method).__name__ if method is not None else 'unknown'
+    description = str(getattr(e, 'message', '') or str(e))[:300]
+    logging.warning(
+     'Telegram 429: method=%s retry_after=%s description=%s; waiting %s seconds before polling again.',
+     method_name, e.retry_after, description, wait_seconds
+    )
     await asyncio.sleep(wait_seconds)
     retry_delay = 5
    except (TelegramNetworkError, TelegramServerError, TelegramConflictError) as e:
