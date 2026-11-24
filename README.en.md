@@ -34,14 +34,14 @@ sudo bash install.sh
 
 The installer asks for the Telegram token, administrator IDs, and VPN-UI connection details. Secrets are entered without being displayed and stored in `.env` with restricted permissions. The encryption key is generated once. Keep a secure backup; never replace it after credentials have been stored.
 
-The installer defaults to `/opt/vpnui-sales-bot` and creates the `vpnui-sales-bot.service` systemd unit. The application directory can be changed with `APP_DIR`.
+The installer defaults to `/opt/aminui-sales-bot` and creates the `aminui-sales-bot.service` systemd unit. The application directory can be changed with `APP_DIR`.
 
 Start and inspect the service:
 
 ```bash
-sudo systemctl start vpnui-sales-bot
-sudo systemctl status vpnui-sales-bot --no-pager
-sudo journalctl -u vpnui-sales-bot -f
+sudo systemctl start aminui-sales-bot
+sudo systemctl status aminui-sales-bot --no-pager
+sudo journalctl -u aminui-sales-bot -f
 ```
 
 ## First setup in Telegram
@@ -109,14 +109,14 @@ sudo bash install.sh
 
 The installer asks for the Telegram bot token, numeric administrator ID(s), VPN-UI panel URL (including port and base path), panel username and password, and optionally the public VPN host/IP. Secrets are not echoed and are stored in `.env` with restricted permissions. The encryption key is generated once; back it up securely and never replace it after account credentials have been stored.
 
-Default installation path: `/opt/vpnui-sales-bot`. systemd service: `vpnui-sales-bot.service`. Set `APP_DIR` to use a different application directory.
+Default installation path: `/opt/aminui-sales-bot`. systemd service: `aminui-sales-bot.service`. Set `APP_DIR` to use a different application directory.
 
 Start and inspect:
 
 ```bash
-sudo systemctl start vpnui-sales-bot
-sudo systemctl status vpnui-sales-bot --no-pager
-sudo journalctl -u vpnui-sales-bot -f
+sudo systemctl start aminui-sales-bot
+sudo systemctl status aminui-sales-bot --no-pager
+sudo journalctl -u aminui-sales-bot -f
 ```
 
 ## First Telegram setup
@@ -136,7 +136,7 @@ Account creation writes real clients to the connected panel. Test the exact pane
 As root, from the installed application directory:
 
 ```bash
-cd /opt/vpnui-sales-bot
+cd /opt/aminui-sales-bot
 sudo bash update.sh
 ```
 
