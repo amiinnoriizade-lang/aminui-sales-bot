@@ -9,9 +9,19 @@ REPO="https://github.com/amiinnoriizade-lang/aminui-sales-bot.git"
 if [[ "${EUID}" -ne 0 ]]; then echo "با root اجرا کنید: sudo bash update.sh" >&2; exit 1; fi
 cd "$APP_DIR"
 if systemctl is-active --quiet "$SERVICE"; then WAS_ACTIVE=1; else WAS_ACTIVE=0; fi
-if [[ -d .git && -n "$(git status --porcelain)" ]]; then
-  echo "تغییر محلی در مخزن وجود دارد؛ ابتدا آن را جداگانه ذخیره کنید." >&2
-  exit 1
+if [[ -d .git ]]; then
+  LOCAL_CHANGES="$(git status --porcelain --untracked-files=all | awk '
+    /^\?\? \.env(\.backup.*)?$/ { next }
+    /^\?\? \.venv\// { next }
+    /^\?\? data\// { next }
+    /^\?\? app\/__pycache__\// { next }
+    { print }
+  ')"
+  if [[ -n "$LOCAL_CHANGES" ]]; then
+    echo "تغییر محلی در فایل‌های پروژه وجود دارد؛ ابتدا آن‌ها را بررسی کنید:" >&2
+    printf "%s\n" "$LOCAL_CHANGES" >&2
+    exit 1
+  fi
 fi
 STAMP="$(date +%Y%m%d-%H%M%S)"
 SOURCE_BACKUP="/root/vpnui-sales-bot-source-$STAMP.tar.gz"
