@@ -19,6 +19,14 @@ def kb(rows): return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton
 async def main():
  cfg=load_config(); await init_db(cfg.database_path,cfg.default_plans,{'vless':cfg.vless_inbound,'l2tp':cfg.l2tp_inbound}); box=SecretBox(cfg.encryption_key)
  bot=Bot(cfg.bot_token,default=DefaultBotProperties(parse_mode=ParseMode.HTML)); dp=Dispatcher(storage=MemoryStorage())
+ original_bot_me = bot.me
+ bot_user_cache = None
+ async def cached_bot_me():
+  nonlocal bot_user_cache
+  if bot_user_cache is None:
+   bot_user_cache = await original_bot_me()
+  return bot_user_cache
+ bot.me = cached_bot_me
  panel=VPNUIClient(cfg.panel_base_url,cfg.panel_username,cfg.panel_password,cfg.verify_tls,cfg.dry_run)
  def admin(uid): return uid in cfg.admin_ids
  def inbound(protocol):
@@ -828,10 +836,10 @@ async def main():
   while True:
    try:
     # start_polling performs the required bot identity lookup itself.
-    await dp.start_polling(bot, polling_timeout=50)
+    await dp.start_polling(bot, polling_timeout=50, close_bot_session=False)
     break
    except TelegramRetryAfter as e:
-    wait_seconds = max(1, int(e.retry_after)) + 2
+    wait_seconds = max(1, int(e.retry_after)) + 5
     method = getattr(e, 'method', None)
     method_name = type(method).__name__ if method is not None else 'unknown'
     description = str(getattr(e, 'message', '') or str(e))[:300]
