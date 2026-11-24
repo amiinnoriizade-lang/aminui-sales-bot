@@ -23,9 +23,8 @@ def load_config():
     except Exception as e: raise RuntimeError('APP_ENCRYPTION_KEY معتبر نیست.') from e
     try: plans=json.loads(os.getenv('DEFAULT_PLANS_JSON','[]'))
     except Exception as e: raise RuntimeError('DEFAULT_PLANS_JSON نامعتبر است.') from e
-    return Config(token,admins,base,user,pw,os.getenv('VPNUI_VERIFY_TLS','true').lower() not in ('0','false','no'),
+    # TLS verification is deliberately enabled; inbound/payment settings live in the Telegram admin UI.
+    # This build provisions real accounts directly; legacy DRY_RUN values in .env are ignored.
+    return Config(token,admins,base,user,pw,True,
       os.getenv('DATABASE_PATH','./data/bot.sqlite3'),os.getenv('VPN_PUBLIC_HOST','').strip(),
-      int(os.getenv('VPNUI_VLESS_INBOUND_ID','0')),int(os.getenv('VPNUI_L2TP_INBOUND_ID','0')),
-      key,os.getenv('CARD_NUMBER','').strip(),os.getenv('CARDHOLDER_NAME','').strip(),
-      os.getenv('PAYMENT_INSTRUCTIONS','رسید کارت‌به‌کارت را ارسال کنید.'),
-      os.getenv('DRY_RUN','true').lower() not in ('0','false','no'),plans)
+      0,0,key,'','','',False,plans)
