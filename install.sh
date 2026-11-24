@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-APP_DIR="${APP_DIR:-/opt/vpnui-sales-bot}"
-SERVICE="vpnui-sales-bot"
+APP_DIR="${APP_DIR:-/opt/aminui-sales-bot}"
+SERVICE="aminui-sales-bot"
 SOURCE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ "${EUID}" -ne 0 ]]; then
@@ -93,6 +93,12 @@ for key in keys:
     set_key('.env', key, os.environ.get(key, ''), quote_mode='always')
 PY
 chmod 600 .env
+
+# Stop the legacy unit so the same Telegram token is never polled twice.
+if systemctl is-active --quiet vpnui-sales-bot.service; then
+  systemctl stop vpnui-sales-bot.service
+fi
+systemctl disable vpnui-sales-bot.service >/dev/null 2>&1 || true
 
 cat > "/etc/systemd/system/${SERVICE}.service" <<UNIT
 [Unit]
