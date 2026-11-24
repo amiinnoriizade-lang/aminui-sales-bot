@@ -19,10 +19,9 @@ def kb(rows): return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton
 async def main():
  cfg=load_config(); await init_db(cfg.database_path,cfg.default_plans,{'vless':cfg.vless_inbound,'l2tp':cfg.l2tp_inbound}); box=SecretBox(cfg.encryption_key)
  bot=Bot(cfg.bot_token,default=DefaultBotProperties(parse_mode=ParseMode.HTML)); dp=Dispatcher(storage=MemoryStorage())
- # aiogram's polling startup calls bot.me() only to print bot identity.
- # The bot ID is encoded in the token, so seed its cache and avoid the
- # rate-limited GetMe endpoint entirely. getUpdates still validates the token.
- bot._me = User(id=bot.id, is_bot=True, first_name="Bot", username="bot")
+ # aiogram asks Telegram for getMe during polling startup. The bot ID is
+ # encoded in the token; seed the cache to avoid repeated GetMe rate limits.
+ bot._me = User(id=bot.id, is_bot=True, first_name='Bot', username='bot')
  panel=VPNUIClient(cfg.panel_base_url,cfg.panel_username,cfg.panel_password,cfg.verify_tls,cfg.dry_run)
  def admin(uid): return uid in cfg.admin_ids
  def inbound(protocol):
@@ -143,6 +142,7 @@ async def main():
      existing=await (await db.execute('SELECT * FROM accounts WHERE id=? AND telegram_id=?',(o['renewal_account_id'],o['telegram_id']))).fetchone()
     if not existing: raise ValueError('حساب مقصد تمدید پیدا نشد.')
     inbound_obj=await panel.get_inbound(existing['inbound_id'])
+    if existing['protocol']!='openvpn': render_connection(cfg,existing['protocol'],inbound_obj,existing['username'],'PREFLIGHT')
     if existing['protocol']=='openvpn':
      validate_openvpn_transport(inbound_obj,existing['transport'])
      ovpn_profile=await panel.download_openvpn_profile(existing['inbound_id'],existing['transport'])
@@ -155,6 +155,7 @@ async def main():
     await finish_renewal(cfg.database_path,oid,existing['id'],new_expiry,o['volume_gb'])
    else:
     inbound_obj=await panel.get_inbound(o['inbound_id'])
+    if o['protocol']!='openvpn': render_connection(cfg,o['protocol'],inbound_obj,o['username'],'PREFLIGHT')
     if o['protocol']=='openvpn':
      validate_openvpn_transport(inbound_obj,o['transport'])
      ovpn_profile=await panel.download_openvpn_profile(o['inbound_id'],o['transport'])
@@ -200,22 +201,35 @@ async def main():
  @dp.callback_query(F.data=='trial')
  async def trial(c:CallbackQuery):
   await c.answer()
-  if cfg.dry_run: return await c.message.answer('حالت آزمایشی DRY_RUN فعال است؛ دریافت تست فعلاً انجام نمی‌شود و سهمیه شما مصرف نخواهد شد.')
-  if not await claim_test(cfg.database_path,c.from_user.id): return await c.message.answer('شما قبلاً یک بار حساب تست دریافت کرده‌اید؛ تست مجدد امکان‌پذیر نیست.')
-  # The claim is permanent if provisioning fails; an administrator must review it.
-  proto='vless'; iid=cfg.vless_inbound
+  iid=int(await get_setting(cfg.database_path,'trial_vless_inbound',str(cfg.vless_inbound)) or 0)
   try:
+   if iid <= 0:
+    candidates=[x for x in await panel.list_inbounds() if str(x.get('protocol') or '').lower()=='vless' and x.get('enable')]
+    if len(candidates)==1: iid=int(candidates[0]['id'])
+    else: raise VPNUIError('مدیر باید Inbound اکانت تست را از منوی مدیریت ربات انتخاب کند.')
+   inbound_obj=await panel.get_inbound(iid)
+   if not inbound_obj.get('enable') or str(inbound_obj.get('protocol','')).lower()!='vless':
+    raise VPNUIError('Inbound تست فعال یا از نوع VLESS نیست.')
    name=f'test{c.from_user.id}'
+   render_connection(cfg,'vless',inbound_obj,name,'PREFLIGHT')
    remote=await panel.existing_usernames([iid])
    if name.casefold() in remote: raise ValueError('شناسه تست از قبل در پنل وجود دارد.')
-   made=await create_panel_account(panel,cfg,proto,iid,name,c.from_user.id,1,0,True)
-   if cfg.dry_run: raise RuntimeError('DRY_RUN فعال است؛ ساخت تست واقعی انجام نشد. سهمیه تست شما برای جلوگیری از تکرار رزرو شد.')
-   io=await panel.get_inbound(iid); conn=render_connection(cfg,proto,io,name,made['credential'])
-   vals=(c.from_user.id,name,proto,iid,made['identity'],box.enc(made['credential']),made['email'],1,made['expiry_ms'],'active',None)
+  except Exception as e:
+   return await c.message.answer('آماده‌سازی اکانت تست ناموفق بود: '+escape(str(e)[:300]))
+  if not await claim_test(cfg.database_path,c.from_user.id):
+   return await c.message.answer('شما قبلاً یک بار حساب تست دریافت کرده‌اید؛ تست مجدد امکان‌پذیر نیست.')
+  try:
+   made=await create_panel_account(panel,cfg,'vless',iid,name,c.from_user.id,1,0,True,inbound_obj=inbound_obj)
+   conn=render_connection(cfg,'vless',inbound_obj,name,made['credential'])
+   vals=(c.from_user.id,name,'vless',iid,made['identity'],box.enc(made['credential']),made['email'],1,made['expiry_ms'],'active',None)
    async with connect(cfg.database_path) as db:
-    cur=await db.execute('INSERT INTO accounts(telegram_id,username,protocol,inbound_id,panel_identity,credential_enc,email,volume_gb,expiry_ms,status,order_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)',vals); await db.commit(); aid=cur.lastrowid
-   await set_test_account(cfg.database_path,c.from_user.id,aid); await c.message.answer('اکانت تست ۱ گیگابایت / ۲۴ ساعت:\n'+escape(conn))
-  except Exception as e: await c.message.answer('تست رزرو شد اما ساخت حساب انجام نشد: '+escape(str(e)[:300]))
+    cur=await db.execute('INSERT INTO accounts(telegram_id,username,protocol,inbound_id,panel_identity,credential_enc,email,volume_gb,expiry_ms,status,order_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)',vals)
+    await db.commit(); aid=cur.lastrowid
+   await set_test_account(cfg.database_path,c.from_user.id,aid)
+   await c.message.answer('اکانت تست ۱ گیگابایت / ۲۴ ساعت:\n'+escape(conn))
+  except Exception as e:
+   logging.exception('trial provisioning failed for telegram user %s',c.from_user.id)
+   await c.message.answer('سهمیه تست رزرو شد اما ساخت یا ثبت حساب کامل نشد. مدیر باید پنل و وضعیت حساب را بررسی کند: '+escape(str(e)[:250]))
  @dp.callback_query(F.data=='account')
  async def account(c:CallbackQuery):
   await c.answer(); rows=await user_accounts(cfg.database_path,c.from_user.id)
@@ -315,7 +329,7 @@ async def main():
  # Graphical admin panel
  def admin_home_kb():
   return kb([[('🧩 مدیریت سرویس‌ها','admin:services'),('📦 مدیریت پلن‌های ثابت','admin:plans')],
-  [('🌐 مشاهده Inboundهای پنل','admin:inbounds')],[('💬 متن خوش‌آمدگویی','admin:welcome')],[('💳 تنظیمات پرداخت','admin:payment')],[('📋 سفارش‌های در انتظار','admin:orders'),('👥 کاربران','admin:users')],[('🧾 مدیریت حساب‌های VPN','admin:accounts')],[('📊 گزارش فروش','admin:stats'),('💾 پشتیبان دیتابیس','admin:backup')],[('📢 پیام همگانی','admin:broadcast')]])
+  [('🌐 مشاهده Inboundهای پنل','admin:inbounds'),('🧪 Inbound اکانت تست','admin:trialinbound')],[('💬 متن خوش‌آمدگویی','admin:welcome')],[('💳 تنظیمات پرداخت','admin:payment')],[('📋 سفارش‌های در انتظار','admin:orders'),('👥 کاربران','admin:users')],[('🧾 مدیریت حساب‌های VPN','admin:accounts')],[('📊 گزارش فروش','admin:stats'),('💾 پشتیبان دیتابیس','admin:backup')],[('📢 پیام همگانی','admin:broadcast')]])
  @dp.callback_query(F.data.startswith('admin:'))
  async def admin_menu(c:CallbackQuery,state):
   if not admin(c.from_user.id): return await c.answer('دسترسی ندارید.',show_alert=True)
@@ -389,6 +403,23 @@ async def main():
     for chunk in chunks[:-1]: await c.message.answer(chunk)
     return await c.message.answer(chunks[-1],reply_markup=kb([[('➕ ساخت سرویس برای Inbound','admin:svcadd')],[('⬅️ بازگشت','admin:home')]]))
    except Exception as e: return await c.message.answer('دریافت Inboundها ناموفق بود: '+escape(str(e)[:300]))
+  if action=='trialinbound':
+   try: entries=await panel.list_inbounds()
+   except Exception as e: return await c.message.answer('دریافت Inboundها ناموفق بود: '+escape(str(e)[:250]))
+   buttons=[]
+   for entry in entries:
+    if str(entry.get('protocol') or '').lower()=='vless' and entry.get('enable'):
+     buttons.append([(f"#{entry.get('id')} VLESS:{entry.get('port','-')}",f"admin:trialinboundset:{entry.get('id')}")])
+   buttons.append([('⬅️ بازگشت','admin:home')])
+   if len(buttons)==1: return await c.message.answer('Inbound فعال VLESS پیدا نشد.',reply_markup=kb(buttons))
+   return await c.message.answer('Inbound مخصوص اکانت تست را انتخاب کنید:',reply_markup=kb(buttons))
+  if action.startswith('trialinboundset:'):
+   try:
+    iid=int(action.split(':',1)[1]); obj=await panel.get_inbound(iid)
+    if not obj.get('enable') or str(obj.get('protocol','')).lower()!='vless': raise ValueError('Inbound انتخابی فعال یا VLESS نیست.')
+    await set_setting(cfg.database_path,'trial_vless_inbound',str(iid))
+    return await c.message.answer(f'Inbound تست روی #{iid} ذخیره شد.',reply_markup=kb([[('⚙️ منوی مدیریت','admin:home')]]))
+   except Exception as e: return await c.message.answer('ذخیره Inbound تست ناموفق بود: '+escape(str(e)[:250]))
   if action=='welcome':
    current=await get_setting(cfg.database_path,'welcome_message','سلام به فروشگاه ما خوش آمدید 🌹\n\nلطفاً پلن و حجم مورد نظر خود را انتخاب کنید.\n\nحداکثر ۱۰ دقیقه بعد از ارسال رسید، اکانت شما تحویل داده می‌شود. ✅')
    await state.set_state(Flow.welcome_text); return await c.message.answer('متن جدید خوش‌آمدگویی را ارسال کنید. برای لغو /cancel را بفرستید.\n\nمتن فعلی:\n'+escape(current))
@@ -827,29 +858,23 @@ async def main():
   await m.answer(f'ارسال شد: {sent}')
  @dp.message(Command('cancel'))
  async def cancel(m:Message,state): await state.clear(); await m.answer('لغو شد.')
- retry_delay = 5
+ retry_delay=5
  try:
   while True:
    try:
-    # start_polling performs the required bot identity lookup itself.
-    await dp.start_polling(bot, polling_timeout=50, close_bot_session=False)
+    await dp.start_polling(bot,polling_timeout=50,close_bot_session=False)
     break
    except TelegramRetryAfter as e:
-    wait_seconds = max(1, int(e.retry_after)) + 5
-    method = getattr(e, 'method', None)
-    method_name = type(method).__name__ if method is not None else 'unknown'
-    description = str(getattr(e, 'message', '') or str(e))[:300]
-    logging.warning(
-     'Telegram 429: method=%s retry_after=%s description=%s; waiting %s seconds before polling again.',
-     method_name, e.retry_after, description, wait_seconds
-    )
+    wait_seconds=max(1,int(e.retry_after))+5
+    method=getattr(e,'method',None)
+    method_name=type(method).__name__ if method is not None else 'unknown'
+    logging.warning('Telegram 429: method=%s retry_after=%s; waiting %s seconds.',method_name,e.retry_after,wait_seconds)
     await asyncio.sleep(wait_seconds)
-    retry_delay = 5
-   except (TelegramNetworkError, TelegramServerError, TelegramConflictError) as e:
-    wait_seconds = retry_delay
-    logging.warning('Telegram connection/startup error (%s); retrying in %s seconds.', type(e).__name__, wait_seconds)
-    await asyncio.sleep(wait_seconds)
-    retry_delay = min(retry_delay * 2, 120)
+    retry_delay=5
+   except (TelegramNetworkError,TelegramServerError,TelegramConflictError) as e:
+    logging.warning('Telegram polling error (%s); retrying in %s seconds.',type(e).__name__,retry_delay)
+    await asyncio.sleep(retry_delay)
+    retry_delay=min(retry_delay*2,120)
  finally:
   await panel.close()
   await bot.session.close()
