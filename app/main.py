@@ -827,6 +827,8 @@ async def main():
  try:
   while True:
    try:
+    # Resolve bot identity before polling so GetMe rate limits are handled by this retry loop.
+    await bot.me()
     await dp.start_polling(bot)
     break
    except TelegramRetryAfter as e:
