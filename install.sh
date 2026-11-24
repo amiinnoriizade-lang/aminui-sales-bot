@@ -94,7 +94,10 @@ for key in keys:
 PY
 chmod 600 .env
 
-# Stop the legacy unit so the same Telegram token is never polled twice.
+# Stop any previous instance before replacing files; avoid duplicate Telegram polling.
+if systemctl is-active --quiet "$SERVICE"; then
+  systemctl stop "$SERVICE"
+fi
 if systemctl is-active --quiet vpnui-sales-bot.service; then
   systemctl stop vpnui-sales-bot.service
 fi
