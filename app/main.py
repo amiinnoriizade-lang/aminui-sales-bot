@@ -6,6 +6,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.state import State,StatesGroup
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.utils.backoff import BackoffConfig
 from aiogram.exceptions import TelegramRetryAfter, TelegramNetworkError, TelegramServerError, TelegramConflictError
 from html import escape
 from .config import load_config
@@ -862,7 +863,7 @@ async def main():
  try:
   while True:
    try:
-    await dp.start_polling(bot,polling_timeout=50,close_bot_session=False)
+    await dp.start_polling(bot,polling_timeout=50,close_bot_session=False,backoff_config=BackoffConfig(min_delay=35,max_delay=300,factor=2,jitter=0.1))
     break
    except TelegramRetryAfter as e:
     wait_seconds=max(1,int(e.retry_after))+5
