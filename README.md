@@ -74,14 +74,14 @@ sudo bash install.sh
 
 اطلاعات محرمانه هنگام ورود نمایش داده نمی‌شوند و در فایل `.env` با مجوز محدود ذخیره می‌شوند. کلید رمزنگاری فقط یک‌بار ساخته می‌شود؛ از آن نسخه پشتیبان امن نگه دارید و پس از ذخیره شدن اطلاعات حساب‌ها آن را تغییر ندهید.
 
-مسیر پیش‌فرض نصب `/opt/vpnui-sales-bot` است و سرویس systemd با نام `vpnui-sales-bot.service` ساخته می‌شود. مسیر نصب را می‌توان با متغیر `APP_DIR` تغییر داد.
+مسیر پیش‌فرض نصب `/opt/aminui-sales-bot` است و سرویس systemd با نام `aminui-sales-bot.service` ساخته می‌شود. مسیر نصب را می‌توان با متغیر `APP_DIR` تغییر داد.
 
 ### اجرای سرویس و مشاهده گزارش
 
 ```bash
-sudo systemctl start vpnui-sales-bot
-sudo systemctl status vpnui-sales-bot --no-pager
-sudo journalctl -u vpnui-sales-bot -f
+sudo systemctl start aminui-sales-bot
+sudo systemctl status aminui-sales-bot --no-pager
+sudo journalctl -u aminui-sales-bot -f
 ```
 
 ## راه‌اندازی اولیه از داخل تلگرام
@@ -101,7 +101,7 @@ sudo journalctl -u vpnui-sales-bot -f
 در سرور و با دسترسی root:
 
 ```bash
-cd /opt/vpnui-sales-bot
+cd /opt/aminui-sales-bot
 sudo bash update.sh
 ```
 
