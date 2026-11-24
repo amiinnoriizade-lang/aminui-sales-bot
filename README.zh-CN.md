@@ -63,3 +63,81 @@ sudo journalctl -u vpnui-sales-bot -f
 - 妥善保存 `APP_ENCRYPTION_KEY`；没有它就无法解密已加密的凭据。
 - 必须验证 TLS 证书。
 - 每个 Telegram Bot Token 只运行一个 polling 实例，以避免轮询冲突。
+
+
+## 项目支持钱包
+
+**TRON（TRX / TRC20 网络）**
+`TUqbpFe8XmL2qcEdQ77SybMU8YW5vf2qGn`
+
+**Bitcoin（BTC）**
+`17F1gSMENRr5tAmTnPEoduvtSGGY3KMVzB`
+
+**Polygon**
+`0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28`
+
+**USDT（TRC20）**
+`TFUvPCaon7eBk1Xaoce3geZPjnks3kEaqW`
+
+**BNB**
+`0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28`
+
+**Ethereum（ETH）**
+`0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28`
+
+请务必选择正确的币种和网络。使用错误网络转账可能导致资产永久丢失。
+
+## 完整安装
+
+在服务器上执行：
+
+```bash
+git clone https://github.com/amiinnoriizade-lang/aminui-sales-bot.git
+cd aminui-sales-bot
+sudo bash install.sh
+```
+
+安装程序会询问 Telegram Bot Token、管理员数字 ID、VPN-UI 面板地址（包含端口和基础路径）、面板用户名和密码，以及可选的公网 VPN IP 或域名。输入密钥时不会显示内容，并以受限权限保存到 `.env`。加密密钥只生成一次；请安全备份，保存账号凭据后不要更换。
+
+默认安装目录：`/opt/vpnui-sales-bot`。systemd 服务：`vpnui-sales-bot.service`。可通过 `APP_DIR` 指定其他目录。
+
+启动并查看服务：
+
+```bash
+sudo systemctl start vpnui-sales-bot
+sudo systemctl status vpnui-sales-bot --no-pager
+sudo journalctl -u vpnui-sales-bot -f
+```
+
+## Telegram 首次配置
+
+1. 使用管理员账号发送 `/start`。
+2. 打开 **مدیریت ربات**（机器人管理）。
+3. 检查面板连接并查看 inbound 列表。
+4. 为免费试用选择一个启用状态的 VLESS inbound。
+5. 创建固定套餐或流量套餐，并为每个套餐指定 inbound。
+6. 设置银行卡号、持卡人姓名和付款说明。
+7. 运行 `/paneltest` 检查面板 API 读取权限。
+
+创建账号会在连接的面板中写入真实客户端。正式销售前，请用测试账号验证实际面板版本和所选 inbound。
+
+## 更新
+
+以 root 身份进入已安装的应用目录后执行：
+
+```bash
+cd /opt/vpnui-sales-bot
+sudo bash update.sh
+```
+
+更新程序会备份源代码、`.env` 和默认 SQLite 数据库，然后安装依赖、编译代码并运行单元测试。只有更新前服务处于运行状态时，才会在更新成功后重启服务。如果安装在其他目录，请先进入实际安装目录。
+
+## 测试
+
+```bash
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+## 安全
+
+请在安全位置同时备份 `.env` 和 SQLite 数据库，并妥善保存 `APP_ENCRYPTION_KEY`。必须验证 TLS 证书。不要将密钥或数据库上传到 GitHub。每个 Telegram Bot Token 只运行一个 polling 实例。
