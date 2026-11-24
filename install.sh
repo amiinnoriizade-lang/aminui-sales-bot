@@ -131,6 +131,16 @@ ReadWritePaths=$APP_DIR
 [Install]
 WantedBy=multi-user.target
 EOF
+mkdir -p "/etc/systemd/system/${SERVICE}.service.d"
+cat > "/etc/systemd/system/${SERVICE}.service.d/restart-policy.conf" <<'EOF'
+[Unit]
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Restart=on-failure
+RestartSec=30
+EOF
 systemctl daemon-reload
 systemctl enable "$SERVICE"
 echo
