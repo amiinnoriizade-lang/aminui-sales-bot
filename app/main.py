@@ -6,6 +6,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.state import State,StatesGroup
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramRetryAfter, TelegramNetworkError, TelegramServerError, TelegramConflictError
 from html import escape
 from .config import load_config
 from .db import *
@@ -822,6 +823,23 @@ async def main():
   await m.answer(f'ارسال شد: {sent}')
  @dp.message(Command('cancel'))
  async def cancel(m:Message,state): await state.clear(); await m.answer('لغو شد.')
- try: await dp.start_polling(bot)
- finally: await panel.close(); await bot.session.close()
+ retry_delay = 5
+ try:
+  while True:
+   try:
+    await dp.start_polling(bot)
+    break
+   except TelegramRetryAfter as e:
+    wait_seconds = max(1, int(e.retry_after)) + 2
+    logging.warning('Telegram rate limit during bot startup/polling; retrying in %s seconds.', wait_seconds)
+    await asyncio.sleep(wait_seconds)
+    retry_delay = 5
+   except (TelegramNetworkError, TelegramServerError, TelegramConflictError) as e:
+    wait_seconds = retry_delay
+    logging.warning('Telegram connection/startup error (%s); retrying in %s seconds.', type(e).__name__, wait_seconds)
+    await asyncio.sleep(wait_seconds)
+    retry_delay = min(retry_delay * 2, 120)
+ finally:
+  await panel.close()
+  await bot.session.close()
 if __name__=='__main__': asyncio.run(main())
