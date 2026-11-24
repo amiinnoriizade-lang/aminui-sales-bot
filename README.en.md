@@ -34,7 +34,7 @@ sudo bash install.sh
 
 The installer asks for the Telegram token, administrator IDs, and VPN-UI connection details. Secrets are entered without being displayed and stored in `.env` with restricted permissions. The encryption key is generated once. Keep a secure backup; never replace it after credentials have been stored.
 
-The installer defaults to `/opt/aminui-sales-bot` and creates the `aminui-sales-bot.service` systemd unit. The application directory can be changed with `APP_DIR`.
+The installer defaults to `/opt/aminui-sales-bot`, creates the `aminui-sales-bot.service` systemd unit, and starts it automatically. If startup fails, installation stops and prints the service logs. The application directory can be changed with `APP_DIR`.
 
 Start and inspect the service:
 
