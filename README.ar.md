@@ -34,14 +34,14 @@ sudo bash install.sh
 
 سيطلب برنامج التثبيت رمز تيليجرام ومعرّفات المدير وبيانات الاتصال بلوحة VPN-UI. لا تظهر الأسرار أثناء إدخالها، وتحفظ في ملف `.env` بصلاحيات مقيدة. يُنشأ مفتاح التشفير مرة واحدة؛ احتفظ بنسخة احتياطية آمنة منه ولا تستبدله بعد تخزين بيانات الحسابات.
 
-المسار الافتراضي للتثبيت هو `/opt/vpnui-sales-bot`، واسم خدمة systemd هو `vpnui-sales-bot.service`. يمكن تغيير مجلد التطبيق باستخدام `APP_DIR`.
+المسار الافتراضي للتثبيت هو `/opt/aminui-sales-bot`، واسم خدمة systemd هو `aminui-sales-bot.service`. يمكن تغيير مجلد التطبيق باستخدام `APP_DIR`.
 
 تشغيل الخدمة ومراجعتها:
 
 ```bash
-sudo systemctl start vpnui-sales-bot
-sudo systemctl status vpnui-sales-bot --no-pager
-sudo journalctl -u vpnui-sales-bot -f
+sudo systemctl start aminui-sales-bot
+sudo systemctl status aminui-sales-bot --no-pager
+sudo journalctl -u aminui-sales-bot -f
 ```
 
 ## الإعداد الأول داخل تيليجرام
@@ -99,14 +99,14 @@ sudo bash install.sh
 
 سيطلب المثبّت رمز بوت تيليجرام، ومعرّفات المدير الرقمية، ورابط لوحة VPN-UI شاملاً المنفذ والمسار الأساسي، واسم المستخدم وكلمة مرور اللوحة، وعنوان IP أو نطاق VPN العام (اختياري). لا تظهر الأسرار أثناء إدخالها وتحفظ في ملف `.env` بصلاحيات محدودة. يُنشأ مفتاح التشفير مرة واحدة؛ احتفظ بنسخة آمنة منه ولا تستبدله بعد حفظ بيانات الحسابات.
 
-مسار التثبيت الافتراضي: `/opt/vpnui-sales-bot`. اسم خدمة systemd: `vpnui-sales-bot.service`. يمكن تغيير المسار باستخدام `APP_DIR`.
+مسار التثبيت الافتراضي: `/opt/aminui-sales-bot`. اسم خدمة systemd: `aminui-sales-bot.service`. يمكن تغيير المسار باستخدام `APP_DIR`.
 
 تشغيل الخدمة ومراجعتها:
 
 ```bash
-sudo systemctl start vpnui-sales-bot
-sudo systemctl status vpnui-sales-bot --no-pager
-sudo journalctl -u vpnui-sales-bot -f
+sudo systemctl start aminui-sales-bot
+sudo systemctl status aminui-sales-bot --no-pager
+sudo journalctl -u aminui-sales-bot -f
 ```
 
 ## الإعداد الأول في تيليجرام
@@ -126,7 +126,7 @@ sudo journalctl -u vpnui-sales-bot -f
 بصلاحية root ومن مجلد التطبيق المثبت:
 
 ```bash
-cd /opt/vpnui-sales-bot
+cd /opt/aminui-sales-bot
 sudo bash update.sh
 ```
 
