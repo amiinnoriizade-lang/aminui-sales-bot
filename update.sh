@@ -18,6 +18,16 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 [[ ! -f data/bot.sqlite3 ]] || cp -a data/bot.sqlite3 "data/bot.sqlite3.backup.$STAMP"
 git pull --ff-only
 .venv/bin/python -m pip install -r requirements.txt
+mkdir -p "/etc/systemd/system/${SERVICE}.service.d"
+cat > "/etc/systemd/system/${SERVICE}.service.d/restart-policy.conf" <<'EOF'
+[Unit]
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Restart=on-failure
+RestartSec=30
+EOF
 systemctl daemon-reload
 if [[ "$WAS_ACTIVE" -eq 1 ]]; then
   systemctl restart "$SERVICE"
