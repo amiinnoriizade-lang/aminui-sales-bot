@@ -34,14 +34,14 @@ sudo bash install.sh
 
 Установщик запросит токен Telegram, ID администраторов и параметры подключения к VPN-UI. Секреты вводятся без отображения и сохраняются в файле `.env` с ограниченными правами доступа. Ключ шифрования создается один раз. Сохраните его резервную копию и не заменяйте после сохранения учетных данных.
 
-Путь установки по умолчанию: `/opt/vpnui-sales-bot`. Служба systemd: `vpnui-sales-bot.service`. Каталог приложения можно изменить через `APP_DIR`.
+Путь установки по умолчанию: `/opt/aminui-sales-bot`. Служба systemd: `aminui-sales-bot.service`. Каталог приложения можно изменить через `APP_DIR`.
 
 Запуск и проверка службы:
 
 ```bash
-sudo systemctl start vpnui-sales-bot
-sudo systemctl status vpnui-sales-bot --no-pager
-sudo journalctl -u vpnui-sales-bot -f
+sudo systemctl start aminui-sales-bot
+sudo systemctl status aminui-sales-bot --no-pager
+sudo journalctl -u aminui-sales-bot -f
 ```
 
 ## Первоначальная настройка в Telegram
@@ -99,14 +99,14 @@ sudo bash install.sh
 
 Установщик запросит токен Telegram-бота, числовые ID администраторов, URL панели VPN-UI (включая порт и базовый путь), имя пользователя и пароль панели, а также публичный IP или домен VPN (необязательно). Секреты не отображаются при вводе и сохраняются в `.env` с ограниченными правами. Ключ шифрования создается один раз; сохраните его резервную копию и не заменяйте после сохранения учетных данных.
 
-Путь установки по умолчанию: `/opt/vpnui-sales-bot`. Служба systemd: `vpnui-sales-bot.service`. Другой каталог можно задать через `APP_DIR`.
+Путь установки по умолчанию: `/opt/aminui-sales-bot`. Служба systemd: `aminui-sales-bot.service`. Другой каталог можно задать через `APP_DIR`.
 
 Запуск и просмотр журнала:
 
 ```bash
-sudo systemctl start vpnui-sales-bot
-sudo systemctl status vpnui-sales-bot --no-pager
-sudo journalctl -u vpnui-sales-bot -f
+sudo systemctl start aminui-sales-bot
+sudo systemctl status aminui-sales-bot --no-pager
+sudo journalctl -u aminui-sales-bot -f
 ```
 
 ## Первоначальная настройка в Telegram
@@ -126,7 +126,7 @@ sudo journalctl -u vpnui-sales-bot -f
 От root, из каталога установленного приложения:
 
 ```bash
-cd /opt/vpnui-sales-bot
+cd /opt/aminui-sales-bot
 sudo bash update.sh
 ```
 
