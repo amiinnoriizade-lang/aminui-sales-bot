@@ -126,6 +126,15 @@ WantedBy=multi-user.target
 UNIT
 systemctl daemon-reload
 systemctl enable "$SERVICE"
+systemctl start "$SERVICE"
+echo
+if systemctl is-active --quiet "$SERVICE"; then
+  echo "وضعیت سرویس: فعال"
+else
+  echo "خطا: سرویس اجرا نشد. گزارش خطا:" >&2
+  journalctl -u "$SERVICE" -n 60 --no-pager >&2 || true
+  exit 1
+fi
 echo
 echo "نصب و تنظیمات تمام شد."
 echo "مسیر: $APP_DIR"
