@@ -67,20 +67,12 @@ VPNUI_PASSWORD="$(ask_secret 'رمز عبور پنل VPN-UI' "$(old_value VPNUI_
 [[ "$VPNUI_BASE_URL" =~ ^https?:// ]] || { echo "آدرس پنل باید با http:// یا https:// شروع شود." >&2; exit 1; }
 [[ "$ADMIN_IDS" =~ ^[0-9]+([[:space:]]*,[[:space:]]*[0-9]+)*$ ]] || { echo "شناسه مدیر باید عددی باشد و با کاما جدا شود." >&2; exit 1; }
 
-VPNUI_VERIFY_TLS="$(ask 'اعتبارسنجی TLS؟ true/false' "$(old_value VPNUI_VERIFY_TLS || true)" no)"
-VPNUI_VERIFY_TLS="${VPNUI_VERIFY_TLS:-true}"
+# TLS certificate verification is always enabled for secure panel connections.
+VPNUI_VERIFY_TLS=true
 VPN_PUBLIC_HOST="$(ask 'دامنه یا IP عمومی سرور VPN (اختیاری)' "$(old_value VPN_PUBLIC_HOST)" no)"
-VPNUI_VLESS_INBOUND_ID="$(ask 'Inbound پیش‌فرض VLESS (اختیاری، 0 برای انتخاب از ربات)' "$(old_value VPNUI_VLESS_INBOUND_ID)" no)"
-VPNUI_VLESS_INBOUND_ID="${VPNUI_VLESS_INBOUND_ID:-0}"
-VPNUI_L2TP_INBOUND_ID="$(ask 'Inbound پیش‌فرض L2TP (اختیاری، 0 برای انتخاب از ربات)' "$(old_value VPNUI_L2TP_INBOUND_ID)" no)"
-VPNUI_L2TP_INBOUND_ID="${VPNUI_L2TP_INBOUND_ID:-0}"
-CARD_NUMBER="$(ask 'شماره کارت (اختیاری)' "$(old_value CARD_NUMBER)" no)"
-CARDHOLDER_NAME="$(ask 'نام صاحب کارت (اختیاری)' "$(old_value CARDHOLDER_NAME)" no)"
-PAYMENT_INSTRUCTIONS="$(ask 'متن راهنمای پرداخت' "$(old_value PAYMENT_INSTRUCTIONS)" no)"
-PAYMENT_INSTRUCTIONS="${PAYMENT_INSTRUCTIONS:-رسید کارت‌به‌کارت را ارسال کنید.}"
-DRY_RUN="$(ask 'حالت آزمایشی؟ true/false (فعلاً true توصیه می‌شود)' "$(old_value DRY_RUN)" no)"
-DRY_RUN="${DRY_RUN:-true}"
-[[ "$DRY_RUN" == "true" || "$DRY_RUN" == "false" ]] || { echo "DRY_RUN فقط true یا false است." >&2; exit 1; }
+# Inbounds and payment details are managed from the Telegram admin menu.
+VPNUI_VLESS_INBOUND_ID=0
+VPNUI_L2TP_INBOUND_ID=0
 
 APP_ENCRYPTION_KEY="$(old_value APP_ENCRYPTION_KEY)"
 if [[ -z "$APP_ENCRYPTION_KEY" ]]; then
@@ -92,17 +84,14 @@ DEFAULT_PLANS_JSON="$(old_value DEFAULT_PLANS_JSON)"
 DEFAULT_PLANS_JSON="${DEFAULT_PLANS_JSON:-[]}"
 
 export BOT_TOKEN ADMIN_IDS VPNUI_BASE_URL VPNUI_USERNAME VPNUI_PASSWORD VPNUI_VERIFY_TLS
-export VPN_PUBLIC_HOST VPNUI_VLESS_INBOUND_ID VPNUI_L2TP_INBOUND_ID APP_ENCRYPTION_KEY
-export CARD_NUMBER CARDHOLDER_NAME PAYMENT_INSTRUCTIONS DRY_RUN DATABASE_PATH DEFAULT_PLANS_JSON
+export VPN_PUBLIC_HOST APP_ENCRYPTION_KEY DATABASE_PATH DEFAULT_PLANS_JSON
 .venv/bin/python - <<'PY'
 import os
 from dotenv import set_key
 path = ".env"
 keys = [
  "BOT_TOKEN","ADMIN_IDS","VPNUI_BASE_URL","VPNUI_USERNAME","VPNUI_PASSWORD",
- "VPNUI_VERIFY_TLS","VPN_PUBLIC_HOST","VPNUI_VLESS_INBOUND_ID","VPNUI_L2TP_INBOUND_ID",
- "APP_ENCRYPTION_KEY","CARD_NUMBER","CARDHOLDER_NAME","PAYMENT_INSTRUCTIONS",
- "DRY_RUN","DATABASE_PATH","DEFAULT_PLANS_JSON"
+ "VPNUI_VERIFY_TLS","VPN_PUBLIC_HOST","APP_ENCRYPTION_KEY","DATABASE_PATH","DEFAULT_PLANS_JSON"
 ]
 open(path, "a").close()
 for key in keys:
@@ -145,6 +134,6 @@ systemctl daemon-reload
 systemctl enable "$SERVICE"
 echo
 echo "تنظیمات با موفقیت در $APP_DIR/.env ذخیره شد."
-echo "حالت آزمایشی: $DRY_RUN"
+echo "اعتبارسنجی TLS: فعال | ساخت حساب واقعی: فعال"
 echo "برای شروع ربات: systemctl start $SERVICE"
 echo "برای گزارش اجرا: journalctl -u $SERVICE -f"
