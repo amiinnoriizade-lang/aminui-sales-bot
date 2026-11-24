@@ -1,7 +1,7 @@
 import asyncio,logging,os,shutil
 from aiogram import Bot,Dispatcher,F
 from aiogram.filters import CommandStart,Command
-from aiogram.types import Message,CallbackQuery,InlineKeyboardMarkup,InlineKeyboardButton,BufferedInputFile
+from aiogram.types import Message,CallbackQuery,InlineKeyboardMarkup,InlineKeyboardButton,BufferedInputFile,User
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.state import State,StatesGroup
 from aiogram.client.default import DefaultBotProperties
@@ -19,14 +19,10 @@ def kb(rows): return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton
 async def main():
  cfg=load_config(); await init_db(cfg.database_path,cfg.default_plans,{'vless':cfg.vless_inbound,'l2tp':cfg.l2tp_inbound}); box=SecretBox(cfg.encryption_key)
  bot=Bot(cfg.bot_token,default=DefaultBotProperties(parse_mode=ParseMode.HTML)); dp=Dispatcher(storage=MemoryStorage())
- original_bot_me = bot.me
- bot_user_cache = None
- async def cached_bot_me():
-  nonlocal bot_user_cache
-  if bot_user_cache is None:
-   bot_user_cache = await original_bot_me()
-  return bot_user_cache
- bot.me = cached_bot_me
+ # aiogram's polling startup calls bot.me() only to print bot identity.
+ # The bot ID is encoded in the token, so seed its cache and avoid the
+ # rate-limited GetMe endpoint entirely. getUpdates still validates the token.
+ bot._me = User(id=bot.id, is_bot=True, first_name="Bot", username="bot")
  panel=VPNUIClient(cfg.panel_base_url,cfg.panel_username,cfg.panel_password,cfg.verify_tls,cfg.dry_run)
  def admin(uid): return uid in cfg.admin_ids
  def inbound(protocol):
