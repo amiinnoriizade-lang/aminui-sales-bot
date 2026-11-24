@@ -1,6 +1,6 @@
 import calendar,time,uuid,json
 from datetime import datetime,timezone
-from urllib.parse import quote
+from urllib.parse import quote,urlsplit
 from .security import password
 from .vpnui import VPNUIError
 
@@ -43,8 +43,9 @@ async def create_panel_account(panel,cfg,protocol,inbound,username,uid,volume_gb
  if result.get('dry_run'): raise VPNUIError('DRY_RUN فعال است؛ ساخت واقعی انجام نشد و سفارش نباید تحویل شود.')
  return {'identity':identity,'credential':credential,'email':email,'expiry_ms':expiry,'client':client}
 def render_connection(cfg,protocol,inbound_obj,username,credential):
- host=cfg.public_host
- if not host: raise VPNUIError('VPN_PUBLIC_HOST تنظیم نشده است.')
+ host=(cfg.public_host or str(inbound_obj.get('listen') or '').strip() or urlsplit(cfg.panel_base_url).hostname or '').strip()
+ if host in ('0.0.0.0','::','127.0.0.1','localhost'): host=urlsplit(cfg.panel_base_url).hostname or ''
+ if not host: raise VPNUIError('آدرس عمومی سرور VPN مشخص نیست؛ VPN_PUBLIC_HOST را تنظیم کنید.')
  port=int(inbound_obj.get('port') or 0)
  if protocol=='openvpn':
   raise VPNUIError('برای OpenVPN باید فایل پروفایل را مستقیماً از API پنل دریافت و ارسال کنید.')
