@@ -174,7 +174,9 @@ SSH
 پنل مدیریت با دسترسی های مختلف
 
 نصب‌پنل با آدرس مستقیم :
+
 curl -Ls https://raw.githubusercontent.com/Sir-MmD/vpn-ui/refs/heads/main/deploy.sh | sudo bash
 ادرس پروژه : 
+
 
 https://github.com/Sir-MmD/vpn-ui/blob/main/README_FA.md
