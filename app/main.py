@@ -1,13 +1,11 @@
 import asyncio,logging,os,shutil
 from aiogram import Bot,Dispatcher,F
 from aiogram.filters import CommandStart,Command
-from aiogram.types import Message,CallbackQuery,InlineKeyboardMarkup,InlineKeyboardButton,BufferedInputFile,User
+from aiogram.types import Message,CallbackQuery,InlineKeyboardMarkup,InlineKeyboardButton,BufferedInputFile
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.state import State,StatesGroup
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.utils.backoff import BackoffConfig
-from aiogram.exceptions import TelegramRetryAfter, TelegramNetworkError, TelegramServerError, TelegramConflictError
 from html import escape
 from .config import load_config
 from .db import *
@@ -20,9 +18,6 @@ def kb(rows): return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton
 async def main():
  cfg=load_config(); await init_db(cfg.database_path,cfg.default_plans,{'vless':cfg.vless_inbound,'l2tp':cfg.l2tp_inbound}); box=SecretBox(cfg.encryption_key)
  bot=Bot(cfg.bot_token,default=DefaultBotProperties(parse_mode=ParseMode.HTML)); dp=Dispatcher(storage=MemoryStorage())
- # aiogram asks Telegram for getMe during polling startup. The bot ID is
- # encoded in the token; seed the cache to avoid repeated GetMe rate limits.
- bot._me = User(id=bot.id, is_bot=True, first_name='Bot', username='bot')
  panel=VPNUIClient(cfg.panel_base_url,cfg.panel_username,cfg.panel_password,cfg.verify_tls,cfg.dry_run)
  def admin(uid): return uid in cfg.admin_ids
  def inbound(protocol):
@@ -859,23 +854,9 @@ async def main():
   await m.answer(f'ارسال شد: {sent}')
  @dp.message(Command('cancel'))
  async def cancel(m:Message,state): await state.clear(); await m.answer('لغو شد.')
- retry_delay=5
  try:
-  while True:
-   try:
-    await dp.start_polling(bot,polling_timeout=50,close_bot_session=False,backoff_config=BackoffConfig(min_delay=35,max_delay=300,factor=2,jitter=0.1))
-    break
-   except TelegramRetryAfter as e:
-    wait_seconds=max(1,int(e.retry_after))+5
-    method=getattr(e,'method',None)
-    method_name=type(method).__name__ if method is not None else 'unknown'
-    logging.warning('Telegram 429: method=%s retry_after=%s; waiting %s seconds.',method_name,e.retry_after,wait_seconds)
-    await asyncio.sleep(wait_seconds)
-    retry_delay=5
-   except (TelegramNetworkError,TelegramServerError,TelegramConflictError) as e:
-    logging.warning('Telegram polling error (%s); retrying in %s seconds.',type(e).__name__,retry_delay)
-    await asyncio.sleep(retry_delay)
-    retry_delay=min(retry_delay*2,120)
+  # Match the polling startup used by the previously working 22-Nov release.
+  await dp.start_polling(bot)
  finally:
   await panel.close()
   await bot.session.close()
