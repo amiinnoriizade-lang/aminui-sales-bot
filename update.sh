@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 APP_DIR="${APP_DIR:-/opt/vpnui-sales-bot}"
-SERVICE="vpnui-sales-bot"
+if [[ ! -d "$APP_DIR" && -d /opt/aminui-sales-bot ]]; then APP_DIR="/opt/aminui-sales-bot"; fi
+SERVICE="${SERVICE:-vpnui-sales-bot}"
+if [[ "$SERVICE" == "vpnui-sales-bot" ]] && ! systemctl cat "$SERVICE" >/dev/null 2>&1 && systemctl cat aminui-sales-bot.service >/dev/null 2>&1; then SERVICE="aminui-sales-bot"; fi
 REPO="https://github.com/amiinnoriizade-lang/aminui-sales-bot.git"
 if [[ "${EUID}" -ne 0 ]]; then echo "با root اجرا کنید: sudo bash update.sh" >&2; exit 1; fi
 cd "$APP_DIR"
