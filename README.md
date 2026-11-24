@@ -1,118 +1,92 @@
-# ربات فروش VPN متصل به VPN-UI
+# VPN-UI Telegram Sales Bot
 
-ربات تلگرامی فروش و مدیریت سرویس با منوی گرافیکی مشتری و مدیر، پلن‌های فروش، پرداخت کارت‌به‌کارت با تأیید دستی، SQLite و اتصال به پنل VPN-UI.
+Telegram sales and account-management bot for one VPN-UI panel instance. It uses the panel HTTP API and a local SQLite database.
 
-## امکانات موجود در کد
-- منوی مشتری و پنل مدیریت تلگرام
-- تعریف پلن و سرویس حجمی، قیمت‌گذاری و مدت اعتبار
-- نام کاربری دلخواه و جلوگیری از تکرار
-- دریافت رسید و تأیید/رد سفارش توسط مدیر
-- ساخت و تمدید حساب از طریق API پنل
-- پشتیبانی پیاده‌سازی‌شده در کد برای VLESS، L2TP و OpenVPN (فایل پروفایل OpenVPN از inbound انتخاب‌شده دریافت می‌شود)
-- ذخیره اطلاعات در SQLite و رمزنگاری اطلاعات محرمانه حساب‌ها
+## Features in this source
 
-> نکته: ساخت حساب واقعی فعال است. پیش از فروش، اتصال پنل و سازگاری API را با یک حساب آزمایشی و Inbound کم‌خطر بررسی کنید.
+- Persian customer menu and graphical Telegram admin menu.
+- Fixed plans and volume-priced services (volume × price per GB per month × months).
+- Customer-selected usernames with local and panel-side duplicate checks.
+- Card-to-card payment: receipt photo, manual admin approval/rejection, then provisioning.
+- VLESS and L2TP account provisioning; L2TP/IPsec PSK is read from the selected inbound settings.
+- OpenVPN TCP/UDP profile retrieval and delivery when the selected panel build exposes the supported profile endpoint.
+- One-time 1 GB / 24-hour VLESS trial, with its inbound selected by an administrator.
+- Account listing, renewal, traffic lookup, admin enable/disable/delete, support messages, broadcasts, and database backup.
+- Fernet encryption for stored account credentials.
 
-## پیش‌نیاز
-- Ubuntu 22.04 یا 24.04
-- دسترسی root یا sudo
-- توکن ربات تلگرام
-- شناسه عددی تلگرام مدیر
-- آدرس، نام کاربری و رمز پنل VPN-UI و دسترسی شبکه سرور ربات به پنل
+The bot can select among compatible inbounds in the connected VPN-UI instance. It is not a multi-panel orchestrator. WireGuard and OpenConnect provisioning are not implemented in this release.
 
-## نصب سریع از GitHub
+## Requirements
 
-هر خط را جداگانه اجرا کنید:
+- Ubuntu 22.04 or 24.04
+- Python 3.10+
+- A Telegram bot token and numeric Telegram admin ID(s)
+- A reachable VPN-UI panel account with permission to manage inbounds/clients
+- A public VPN hostname or IP clients can reach
+
+## Install
 
 ```bash
-apt update && apt install -y git
 git clone https://github.com/amiinnoriizade-lang/aminui-sales-bot.git
 cd aminui-sales-bot
-chmod +x install.sh
 sudo bash install.sh
 ```
 
-نصب‌کننده فقط اطلاعات اتصال ربات و پنل را می‌پرسد: توکن تلگرام، شناسه مدیر، آدرس پنل، نام کاربری و رمز پنل. رمزها هنگام تایپ نمایش داده نمی‌شوند. اعتبارسنجی TLS همیشه روشن است. Inboundها و اطلاعات کارت و راهنمای پرداخت از منوی گرافیکی مدیریت ربات تنظیم می‌شوند. کلید رمزنگاری به‌صورت خودکار ساخته می‌شود و سرویس systemd ثبت می‌شود. در نصب مجدد، با زدن Enter می‌توانید مقدار قبلی اطلاعات اصلی را نگه دارید. ربات به‌صورت خودکار اجرا نمی‌شود؛ بعد از پایان تنظیمات، دستور شروع را اجرا کنید.
+The installer prompts for the Telegram token, admin IDs, and VPN-UI connection details. Secrets are entered without being echoed and saved in `/opt/vpnui-sales-bot/.env` with mode `600`. The encryption key is generated once; keep a secure backup of it. Never replace it after credentials have been stored.
 
-## تنظیمات اولیه
+The canonical service and paths are:
 
-فایل زیر را باز کنید:
+- Application: `/opt/vpnui-sales-bot`
+- systemd unit: `vpnui-sales-bot.service`
+- Database: `/opt/vpnui-sales-bot/data/bot.sqlite3` by default
+
+Start and inspect the bot:
 
 ```bash
-nano /opt/aminui-sales-bot/.env
+sudo systemctl start vpnui-sales-bot
+sudo systemctl status vpnui-sales-bot --no-pager
+sudo journalctl -u vpnui-sales-bot -f
 ```
 
-حداقل این موارد را با اطلاعات واقعی خودتان پر کنید:
+## First setup in Telegram
 
-- `BOT_TOKEN`: توکن دریافتی از BotFather
-- `ADMIN_IDS`: شناسه عددی مدیر؛ در صورت تعدد با کاما جدا کنید
-- `VPNUI_BASE_URL`: آدرس پنل، همراه پورت و بدون اسلش انتهایی
-- `VPNUI_USERNAME` و `VPNUI_PASSWORD`: اطلاعات ورود پنل
-- اعتبارسنجی گواهی TLS به‌صورت اجباری روشن است و از تنظیمات نصب‌کننده تغییر نمی‌کند.
+1. Send `/start` to the bot using an administrator Telegram account.
+2. Open **مدیریت ربات**.
+3. Open **مشاهده Inboundهای پنل** and confirm the panel connection.
+4. For the free test account, open **Inbound اکانت تست** and select an active VLESS inbound.
+5. Create fixed plans or volume-priced services and select the intended inbound for each.
+6. Configure the card number, cardholder name, and payment instructions in **تنظیمات پرداخت**.
+7. Run `/paneltest` to re-check panel API read access.
 
-`APP_ENCRYPTION_KEY` در نصب اولیه خودکار ساخته می‌شود. آن را حذف یا عوض نکنید؛ تغییر آن باعث می‌شود رمزهای ذخیره‌شده قبلی قابل رمزگشایی نباشند. از فایل .env و دیتابیس پشتیبان امن بگیرید و هیچ‌کدام را در GitHub قرار ندهید.
+Provisioning writes real clients to the panel. First validate the exact VPN-UI build and the selected inbound with a controlled test account. The bot performs preflight checks before writing, including the connection host and L2TP PSK when IPsec is enabled. A write with an ambiguous result is locked for manual reconciliation to avoid duplicate accounts.
 
-شماره کارت، نام صاحب کارت، متن راهنمای پرداخت و انتخاب Inboundها فقط از منوی مدیریت ربات تنظیم می‌شوند. برای شروع می‌توانید `DEFAULT_PLANS_JSON=[]` نگه دارید و پلن‌ها را از منوی مدیریت بسازید.
+## Update
 
-## اجرای ربات
-
-پس از تکمیل فایل .env:
-
-```bash
-systemctl start aminui-sales-bot
-systemctl status aminui-sales-bot --no-pager
-journalctl -u aminui-sales-bot -f
-```
-
-برای توقف و راه‌اندازی مجدد:
+Run as root:
 
 ```bash
-systemctl stop aminui-sales-bot
-systemctl restart aminui-sales-bot
-```
-
-## ساخت حساب واقعی
-
-حالت آزمایشی حذف شده و ساخت حساب واقعی فعال است. قبل از ارائه سرویس به مشتری، از منوی مدیریت ربات اتصال پنل و Inboundهای مورد استفاده را بررسی کنید و ابتدا یک سفارش آزمایشی کنترل‌شده بسازید.
-
-## به‌روزرسانی
-
-```bash
-cd /opt/aminui-sales-bot
+cd /opt/vpnui-sales-bot
 sudo bash update.sh
 ```
 
-اسکریپت قبل از به‌روزرسانی از .env و دیتابیس نسخه پشتیبان می‌گیرد و فقط در صورتی که سرویس قبلاً فعال بوده باشد آن را دوباره راه‌اندازی می‌کند.
+The updater backs up source, `.env`, and the default SQLite database before updating. It compiles the code and runs the unit tests before restarting an already-running service. It does not start a service that was previously stopped.
 
-## تست‌ها
+## Tests
 
 ```bash
-cd /opt/aminui-sales-bot
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-## ساختار اصلی
+GitHub Actions runs the same test suite on pushes and pull requests.
 
-- `app/`: کد برنامه
-- `tests/`: تست‌ها
-- `data/`: پایگاه داده محلی
-- `.env.example`: نمونه تنظیمات غیرمحرمانه
-- `install.sh`: نصب وابستگی‌ها و سرویس
-- `update.sh`: پشتیبان‌گیری و به‌روزرسانی
+## Security and backups
 
-## حمایت مالی
+- Never commit `.env`, `.env.*` backups, SQLite files, or panel credentials.
+- Back up `.env` and the SQLite database together, securely and separately from GitHub.
+- Keep `APP_ENCRYPTION_KEY`; without it, encrypted credentials in the database cannot be decrypted.
+- TLS certificate verification is mandatory; do not disable it.
+- Run only one polling instance for a given Telegram bot token. A second instance causes Telegram polling conflicts.
 
-اگر پروژه برای شما مفید است، می‌توانید از توسعه آن حمایت کنید:
+## Panel API compatibility
 
-| شبکه | آدرس |
-|---|---|
-| TRON (TRX) | `TUqbpFe8XmL2qcEdQ77SybMU8YW5vf2qGn` |
-| Bitcoin (BTC) | `17F1gSMENRr5tAmTnPEoduvtSGGY3KMVz` |
-| Polygon | `0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28` |
-| USDT (TRC20) | `TFUvPCaon7eBk1Xaoce3geZPjnks3kEaqW` |
-| BNB | `0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28` |
-| ETH | `0x88B8841E9f47B57f7fd1bBb6375FcA6CB786EE28` |
-
-## پنل VPN-UI
-
-پروژه پنل موردنیاز: https://github.com/Sir-MmD/vpn-ui
+The client uses VPN-UI endpoints for listing/getting inbounds, adding/updating/deleting clients, and fetching OpenVPN profiles. VPN-UI forks can differ. Passing local unit tests does not prove that a particular panel fork accepts every write endpoint; verify the exact panel build before selling accounts.
