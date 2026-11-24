@@ -24,4 +24,20 @@ class TestService(unittest.TestCase):
    self.assertTrue(panel.updated[2]['enable'])
   asyncio.run(go())
 
+
+ def test_render_connection_uses_inbound_listen_when_public_host_is_optional(self):
+  from types import SimpleNamespace
+  from app.service import render_connection
+  cfg=SimpleNamespace(public_host='',panel_base_url='https://panel.example.com:2053')
+  inbound={'listen':'203.0.113.10','port':443,'streamSettings':{'network':'tcp','security':'none'}}
+  result=render_connection(cfg,'vless',inbound,'customer','uuid-123')
+  self.assertIn('uuid-123@203.0.113.10:443',result)
+ def test_render_connection_uses_panel_hostname_when_inbound_listens_on_all_interfaces(self):
+  from types import SimpleNamespace
+  from app.service import render_connection
+  cfg=SimpleNamespace(public_host='',panel_base_url='https://panel.example.com:2053')
+  inbound={'listen':'0.0.0.0','port':443,'streamSettings':{'network':'tcp','security':'none'}}
+  result=render_connection(cfg,'vless',inbound,'customer','uuid-123')
+  self.assertIn('uuid-123@panel.example.com:443',result)
+
 if __name__=='__main__': unittest.main()
