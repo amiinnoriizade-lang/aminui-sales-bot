@@ -34,14 +34,14 @@ sudo bash install.sh
 
 安装程序会询问 Telegram Token、管理员 ID 和 VPN-UI 面板连接信息。输入密钥时不会回显，并会以受限权限保存到 `.env` 文件。加密密钥只生成一次；请安全备份，保存账号凭据后不要更换该密钥。
 
-默认安装目录为 `/opt/vpnui-sales-bot`，systemd 服务名称为 `vpnui-sales-bot.service`。可通过 `APP_DIR` 修改应用目录。
+默认安装目录为 `/opt/aminui-sales-bot`，systemd 服务名称为 `aminui-sales-bot.service`。可通过 `APP_DIR` 修改应用目录。
 
 启动并查看服务：
 
 ```bash
-sudo systemctl start vpnui-sales-bot
-sudo systemctl status vpnui-sales-bot --no-pager
-sudo journalctl -u vpnui-sales-bot -f
+sudo systemctl start aminui-sales-bot
+sudo systemctl status aminui-sales-bot --no-pager
+sudo journalctl -u aminui-sales-bot -f
 ```
 
 ## Telegram 首次配置
@@ -99,14 +99,14 @@ sudo bash install.sh
 
 安装程序会询问 Telegram Bot Token、管理员数字 ID、VPN-UI 面板地址（包含端口和基础路径）、面板用户名和密码，以及可选的公网 VPN IP 或域名。输入密钥时不会显示内容，并以受限权限保存到 `.env`。加密密钥只生成一次；请安全备份，保存账号凭据后不要更换。
 
-默认安装目录：`/opt/vpnui-sales-bot`。systemd 服务：`vpnui-sales-bot.service`。可通过 `APP_DIR` 指定其他目录。
+默认安装目录：`/opt/aminui-sales-bot`。systemd 服务：`aminui-sales-bot.service`。可通过 `APP_DIR` 指定其他目录。
 
 启动并查看服务：
 
 ```bash
-sudo systemctl start vpnui-sales-bot
-sudo systemctl status vpnui-sales-bot --no-pager
-sudo journalctl -u vpnui-sales-bot -f
+sudo systemctl start aminui-sales-bot
+sudo systemctl status aminui-sales-bot --no-pager
+sudo journalctl -u aminui-sales-bot -f
 ```
 
 ## Telegram 首次配置
@@ -126,7 +126,7 @@ sudo journalctl -u vpnui-sales-bot -f
 以 root 身份进入已安装的应用目录后执行：
 
 ```bash
-cd /opt/vpnui-sales-bot
+cd /opt/aminui-sales-bot
 sudo bash update.sh
 ```
 
